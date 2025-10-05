@@ -1,0 +1,2 @@
+# No external dependencies required for shadow calculations
+# Python standard library is sufficient
