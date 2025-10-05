@@ -18,16 +18,16 @@ export default function LightAndShadowPage() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to Simulations
+            Zurück zu den Simulationen
           </Link>
         </div>
 
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-            Light and Shadow
+            Licht und Schatten
           </h1>
           <p className="text-gray-400 text-lg">
-            Explore how different light sources create and modify shadows
+            Erkunden Sie, wie verschiedene Lichtquellen Schatten erzeugen und verändern
           </p>
         </div>
 

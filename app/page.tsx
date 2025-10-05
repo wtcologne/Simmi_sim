@@ -4,8 +4,8 @@ export default function Home() {
   const simulations = [
     {
       id: 'light-and-shadow',
-      title: 'Light and Shadow',
-      description: 'Explore how light sources create shadows with adjustable parameters',
+      title: 'Licht und Schatten',
+      description: 'Erkunden Sie, wie Lichtquellen Schatten mit einstellbaren Parametern erzeugen',
       color: 'from-yellow-500 to-orange-600',
     },
     // Future simulations can be added here
@@ -22,10 +22,10 @@ export default function Home() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
           <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            Physics Simulations
+            Physik-Simulationen
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Interactive visualizations of fundamental physics concepts for learning and exploration
+            Interaktive Visualisierungen grundlegender Physikkonzepte zum Lernen und Erkunden
           </p>
         </div>
 
@@ -45,7 +45,7 @@ export default function Home() {
                   {sim.description}
                 </p>
                 <div className="mt-4 flex items-center text-blue-400 group-hover:text-blue-300">
-                  <span className="text-sm font-medium">Explore</span>
+                  <span className="text-sm font-medium">Erkunden</span>
                   <svg
                     className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform"
                     fill="none"
@@ -61,7 +61,7 @@ export default function Home() {
         </div>
 
         <div className="mt-16 text-center text-gray-500 text-sm">
-          <p>Built with Next.js, TypeScript, and p5.js</p>
+          <p>Erstellt mit Next.js, TypeScript und p5.js</p>
         </div>
       </div>
     </main>
