@@ -38,6 +38,8 @@ export default function LightAndShadowSimulation() {
   })
   const [shadowData, setShadowData] = useState<any>(null)
   const [draggedElement, setDraggedElement] = useState<{ type: 'light' | 'obstacle', index?: number } | null>(null)
+  const [showLightRays, setShowLightRays] = useState<boolean>(true)
+  const [animationTime, setAnimationTime] = useState<number>(0)
 
   const canvasWidth = 800
   const canvasHeight = 600
@@ -114,6 +116,9 @@ export default function LightAndShadowSimulation() {
   }
 
   const draw = (p5: P5) => {
+    // Update animation time
+    setAnimationTime(p5.millis() * 0.001)
+    
     // Background - dark scene
     p5.background(20, 20, 30)
 
@@ -144,6 +149,14 @@ export default function LightAndShadowSimulation() {
     p5.text('Lichtquellen', 125, 30)
     p5.text('Hindernis', 400, 30)
     p5.text('Schattenfall', 675, 30)
+
+    // Draw light rays for each light source
+    if (showLightRays) {
+      lightSources.forEach((light) => {
+        const rgb = hexToRgb(light.color)
+        drawLightRays(p5, light.x, light.y, rgb, light.intensity, light.isExtended, light.radius)
+      })
+    }
 
     // Draw shadows for each light source
     lightSources.forEach((light) => {
@@ -225,6 +238,163 @@ export default function LightAndShadowSimulation() {
     p5.textSize(11)
     p5.textAlign(p5.LEFT)
     p5.text('Ziehen Sie die Lichter und das Hindernis per Drag & Drop', 10, canvasHeight - 10)
+  }
+
+  const drawLightRays = (
+    p5: P5,
+    lightX: number,
+    lightY: number,
+    rgb: { r: number; g: number; b: number },
+    intensity: number,
+    isExtended: boolean,
+    radius: number
+  ) => {
+    // Draw light rays from the light source - more focused towards the obstacle
+    const numRays = isExtended ? 20 : 16
+    const rayLength = 500
+    
+    // Calculate angle range towards the obstacle
+    const dx = obstacle.x - lightX
+    const dy = obstacle.y - lightY
+    const targetAngle = Math.atan2(dy, dx)
+    const angleSpread = Math.PI / 3 // 60 degrees spread
+    
+    for (let i = 0; i < numRays; i++) {
+      // Create rays more focused towards the obstacle
+      const angleOffset = (i / (numRays - 1) - 0.5) * angleSpread
+      const angle = targetAngle + angleOffset
+      
+      const startX = lightX + (isExtended ? Math.cos(angle) * radius * 0.3 : 0)
+      const startY = lightY + (isExtended ? Math.sin(angle) * radius * 0.3 : 0)
+      
+      // Calculate ray direction
+      const rayDirX = Math.cos(angle)
+      const rayDirY = Math.sin(angle)
+      
+      // Check if ray hits obstacle
+      const hitResult = checkRayObstacleIntersection(
+        startX, startY, rayDirX, rayDirY,
+        obstacle.x, obstacle.y, obstacle.width, obstacle.height
+      )
+      
+      if (hitResult.hit) {
+        // Draw ray from light to obstacle with pulsing animation
+        const pulseIntensity = 0.8 + 0.2 * Math.sin(animationTime * 3 + i * 0.5)
+        p5.stroke(rgb.r, rgb.g, rgb.b, 180 * intensity * pulseIntensity)
+        p5.strokeWeight(2.5)
+        p5.line(startX, startY, hitResult.x, hitResult.y)
+        
+        // Draw shadow ray (ray that would continue but is blocked)
+        const shadowRayLength = 150
+        const shadowEndX = hitResult.x + rayDirX * shadowRayLength
+        const shadowEndY = hitResult.y + rayDirY * shadowRayLength
+        
+        // Only draw shadow ray in shadow area
+        if (shadowEndX > 550) {
+          p5.stroke(rgb.r, rgb.g, rgb.b, 60 * intensity * pulseIntensity)
+          p5.strokeWeight(1)
+          p5.line(hitResult.x, hitResult.y, shadowEndX, shadowEndY)
+        }
+      } else {
+        // Draw ray that doesn't hit obstacle with pulsing animation
+        const endX = startX + rayDirX * rayLength
+        const endY = startY + rayDirY * rayLength
+        
+        // Only draw rays that go towards the right side
+        if (endX > 250) {
+          const pulseIntensity = 0.7 + 0.3 * Math.sin(animationTime * 2 + i * 0.3)
+          p5.stroke(rgb.r, rgb.g, rgb.b, 120 * intensity * pulseIntensity)
+          p5.strokeWeight(1.5)
+          p5.line(startX, startY, endX, endY)
+        }
+      }
+    }
+    
+    // Draw additional rays for extended light sources to show the spread
+    if (isExtended) {
+      const numSpreadRays = 8
+      for (let i = 0; i < numSpreadRays; i++) {
+        const angle = (i / numSpreadRays) * Math.PI * 2
+        const startX = lightX + Math.cos(angle) * radius
+        const startY = lightY + Math.sin(angle) * radius
+        
+        const rayDirX = Math.cos(angle)
+        const rayDirY = Math.sin(angle)
+        
+        const hitResult = checkRayObstacleIntersection(
+          startX, startY, rayDirX, rayDirY,
+          obstacle.x, obstacle.y, obstacle.width, obstacle.height
+        )
+        
+        if (hitResult.hit) {
+          p5.stroke(rgb.r, rgb.g, rgb.b, 100 * intensity)
+          p5.strokeWeight(1)
+          p5.line(startX, startY, hitResult.x, hitResult.y)
+        }
+      }
+    }
+  }
+
+  const checkRayObstacleIntersection = (
+    rayX: number, rayY: number, rayDirX: number, rayDirY: number,
+    rectX: number, rectY: number, rectWidth: number, rectHeight: number
+  ) => {
+    const rectLeft = rectX - rectWidth / 2
+    const rectRight = rectX + rectWidth / 2
+    const rectTop = rectY - rectHeight
+    const rectBottom = rectY
+    
+    // Check if ray intersects with rectangle
+    let tMin = 0
+    let tMax = 1000
+    
+    // Check X-axis
+    if (Math.abs(rayDirX) < 0.0001) {
+      // Ray is parallel to X-axis
+      if (rayX < rectLeft || rayX > rectRight) {
+        return { hit: false, x: 0, y: 0 }
+      }
+    } else {
+      const t1 = (rectLeft - rayX) / rayDirX
+      const t2 = (rectRight - rayX) / rayDirX
+      const tMinX = Math.min(t1, t2)
+      const tMaxX = Math.max(t1, t2)
+      
+      tMin = Math.max(tMin, tMinX)
+      tMax = Math.min(tMax, tMaxX)
+      
+      if (tMin > tMax) {
+        return { hit: false, x: 0, y: 0 }
+      }
+    }
+    
+    // Check Y-axis
+    if (Math.abs(rayDirY) < 0.0001) {
+      // Ray is parallel to Y-axis
+      if (rayY < rectTop || rayY > rectBottom) {
+        return { hit: false, x: 0, y: 0 }
+      }
+    } else {
+      const t1 = (rectTop - rayY) / rayDirY
+      const t2 = (rectBottom - rayY) / rayDirY
+      const tMinY = Math.min(t1, t2)
+      const tMaxY = Math.max(t1, t2)
+      
+      tMin = Math.max(tMin, tMinY)
+      tMax = Math.min(tMax, tMaxY)
+      
+      if (tMin > tMax) {
+        return { hit: false, x: 0, y: 0 }
+      }
+    }
+    
+    if (tMin > 0) {
+      const hitX = rayX + rayDirX * tMin
+      const hitY = rayY + rayDirY * tMin
+      return { hit: true, x: hitX, y: hitY }
+    }
+    
+    return { hit: false, x: 0, y: 0 }
   }
 
   const drawShadowFromPoint = (
@@ -315,6 +485,22 @@ export default function LightAndShadowSimulation() {
       </div>
 
       <div className="lg:w-96 space-y-6">
+        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+          <h2 className="text-xl font-bold mb-4 text-white">Simulation</h2>
+          
+          <div className="mb-6 p-4 bg-gray-900 rounded-lg border border-gray-600">
+            <div className="flex items-center justify-between">
+              <label className="text-sm text-gray-400">Lichtstrahlen anzeigen</label>
+              <input
+                type="checkbox"
+                checked={showLightRays}
+                onChange={(e) => setShowLightRays(e.target.checked)}
+                className="w-5 h-5 rounded"
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
           <h2 className="text-xl font-bold mb-4 text-white">Lichtquellen</h2>
           
@@ -489,11 +675,17 @@ export default function LightAndShadowSimulation() {
 
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
           <h3 className="text-lg font-semibold mb-2 text-white">Über diese Simulation</h3>
-          <p className="text-sm text-gray-400 leading-relaxed">
+          <p className="text-sm text-gray-400 leading-relaxed mb-3">
             Diese Simulation zeigt, wie Lichtquellen Schatten erzeugen. Punktlichtquellen erzeugen
             scharfe Schatten (Kernschatten), während erweiterte Lichtquellen weiche Schatten mit einem
             Halbschatten-Bereich erzeugen. Experimentieren Sie mit mehreren Lichtern, um zu sehen,
             wie sich Schatten überlagern und interagieren.
+          </p>
+          <p className="text-sm text-gray-400 leading-relaxed">
+            <strong className="text-yellow-400">Lichtstrahlen:</strong> Die animierten Linien zeigen, 
+            wie Licht von den Quellen ausgeht und mit Hindernissen interagiert. Strahlen, die das 
+            Hindernis treffen, werden blockiert und erzeugen Schatten. Die Pulsation der Strahlen 
+            veranschaulicht die Wellennatur des Lichts.
           </p>
         </div>
       </div>
