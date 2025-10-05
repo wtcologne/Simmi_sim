@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import type p5Types from 'p5'
+import type P5 from 'react-p5/node_modules/@types/p5'
 
 const Sketch = dynamic(() => import('react-p5').then((mod) => mod.default), {
   ssr: false,
@@ -92,11 +92,11 @@ export default function LightAndShadowSimulation() {
       : { r: 255, g: 255, b: 255 }
   }
 
-  const setup = (p5: p5Types, canvasParentRef: Element) => {
+  const setup = (p5: P5, canvasParentRef: Element) => {
     p5.createCanvas(canvasWidth, canvasHeight).parent(canvasParentRef)
   }
 
-  const draw = (p5: p5Types) => {
+  const draw = (p5: P5) => {
     // Background - dark scene
     p5.background(20, 20, 30)
 
@@ -180,7 +180,7 @@ export default function LightAndShadowSimulation() {
   }
 
   const drawShadowFromPoint = (
-    p5: p5Types,
+    p5: P5,
     lightX: number,
     lightY: number,
     rgb: { r: number; g: number; b: number },
