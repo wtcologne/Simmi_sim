@@ -8,6 +8,12 @@ export default function Home() {
       description: 'Erkunden Sie, wie Lichtquellen Schatten mit einstellbaren Parametern erzeugen',
       color: 'from-yellow-500 to-orange-600',
     },
+    {
+      id: 'pendulum',
+      title: 'Fadenpendel',
+      description: 'Interaktive Simulation der Pendelphysik mit Echtzeit-Visualisierung und Einstellungen',
+      color: 'from-green-500 to-teal-600',
+    },
     // Future simulations can be added here
     // {
     //   id: 'refraction',
